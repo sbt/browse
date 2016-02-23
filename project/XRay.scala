@@ -2,35 +2,7 @@
 	import Keys._
 	import Configurations.CompilerPlugin
 
-object XRay extends Build
-{
-	lazy val main = Project("sxr", file(".")) settings(
-		name := "sxr",
-		organization in ThisBuild := "org.scala-sbt.sxr",
-		version in ThisBuild := "0.3.1-SNAPSHOT",
-		scalaVersion in ThisBuild := "2.10.2",
-		scalacOptions += "-deprecation",
-		ivyConfigurations += js,
-		exportJars := true,
-		libraryDependencies ++= dependencies,
-		libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-		jqueryAll := target.value / "jquery-all.js",
-		combineJs := combineJquery(update.value, jqueryAll.value, streams.value.log),
-		resourceGenerators in Compile <+= combineJs
-	)
-
-	lazy val test = project.dependsOn(main % CompilerPlugin).settings(testProjectSettings: _*)
-
-	lazy val testLink = project.dependsOn(main % CompilerPlugin, test).settings(testProjectSettings: _*).settings(
-		scalacOptions += {
-			val _ = clean.value
-			val linkFile = target.value / "links"
-			val testLinkFile = classDirectory.in(test, Compile).value.getParentFile / "classes.sxr"
-			IO.write(linkFile, testLinkFile.toURI.toURL.toExternalForm)
-			s"-P:sxr:link-file:$linkFile"
-		}
-	)
-
+object XRay {
 	def testProjectSettings = Seq(
 		autoCompilerPlugins := true,
 		compile in Compile <<= (compile in Compile).dependsOn(clean),
@@ -43,10 +15,10 @@ object XRay extends Build
 	)
 
 	val js = config("js").hide
-	
+
 	val combineJs = TaskKey[Seq[File]]("combine-js")
 	val jqueryAll = SettingKey[File]("jquery-all")
-	
+
 	val jquery_version = "1.3.2"
 	val jquery_scrollto_version = "1.4.2"
 	val jquery_qtip_version = "1.0.0-rc3"
