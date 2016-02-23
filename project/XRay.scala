@@ -3,17 +3,6 @@
 	import Configurations.CompilerPlugin
 
 object XRay {
-	def testProjectSettings = Seq(
-		autoCompilerPlugins := true,
-		compile in Compile <<= (compile in Compile).dependsOn(clean),
-		Keys.test := {
-			val _ = (compile in Compile).value
-			val out = (classDirectory in Compile).value
-			val base = baseDirectory.value
-			checkOutput(out / "../classes.sxr", base / "expected", streams.value.log)
-		}
-	)
-
 	val js = config("js").hide
 
 	val combineJs = TaskKey[Seq[File]]("combine-js")
@@ -42,8 +31,7 @@ object XRay {
 			Using.fileOutputStream(append = true)(to) { out => IO.transfer(in, out) }
 		}
 
-
-	def checkOutput(sxrDir: File, expectedDir: File, log: Logger) {
+	def checkOutput(sxrDir: File, expectedDir: File, buildDir: File, log: Logger) {
 		val actual = filesToCompare(sxrDir)
 		val expected = filesToCompare(expectedDir)
 		val actualRelative = actual._2s
@@ -58,7 +46,7 @@ object XRay {
 		val different = actualRelative filterNot { relativePath =>
 			val actualFile = actual.reverse(relativePath).head
 			val expectedFile = expected.reverse(relativePath).head
-			val same = sameFile(actualFile, expectedFile)
+			val same = sameFile(actualFile, expectedFile, buildDir)
 			if(!same) log.error(s"$relativePath\n\t$actualFile\n\t$expectedFile")
 			same
 		}
@@ -69,6 +57,9 @@ object XRay {
 		val mappings = dir ** ("*.html" | "*.index") x relativeTo(dir)
 		Relation.empty ++ mappings
 	}
-	def sameFile(actualFile: File, expectedFile: File): Boolean =
-		IO.read(actualFile) == IO.read(expectedFile)
+	def sameFile(actualFile: File, expectedFile: File, buildDir: File): Boolean =
+		{
+			val actual = IO.read(actualFile).replaceAllLiterally(buildDir.toURI.toURL.toExternalForm, "base/")
+			actual == IO.read(expectedFile)
+		}
 }

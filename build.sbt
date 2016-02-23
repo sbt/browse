@@ -25,19 +25,35 @@ lazy val sxr = (project in file(".")).
     bintrayRepository := (bintrayRepository in ThisBuild).value
   )
 
-lazy val test = project.
+lazy val testProj: Project = (project in file("test")).
   dependsOn(sxr % CompilerPlugin).
-  settings(testProjectSettings: _*)
-
-lazy val testLink = project.dependsOn(sxr % CompilerPlugin, test).
-  settings(testProjectSettings: _*).
   settings(
+    testProjectSettings,
+    publish := {},
+    publishLocal := {}
+  )
+
+lazy val testLink: Project = project.dependsOn(sxr % CompilerPlugin, testProj).
+  settings(
+    testProjectSettings,
+    publish := {},
+    publishLocal := {},
     scalacOptions += {
       val _ = clean.value
       val linkFile = target.value / "links"
-      val testLinkFile = classDirectory.in(test, Compile).value.getParentFile / "classes.sxr"
+      val testLinkFile = classDirectory.in(testProj, Compile).value.getParentFile / "classes.sxr"
       IO.write(linkFile, testLinkFile.toURI.toURL.toExternalForm)
       s"-P:sxr:link-file:$linkFile"
     }
   )
 
+def testProjectSettings = Seq(
+  autoCompilerPlugins := true,
+  compile in Compile <<= (compile in Compile).dependsOn(clean),
+  test := {
+    val _ = (compile in Compile).value
+    val out = (classDirectory in Compile).value
+    val base = baseDirectory.value
+    checkOutput(out / "../classes.sxr", base / "expected", (baseDirectory in LocalRootProject).value, streams.value.log)
+  }
+)
