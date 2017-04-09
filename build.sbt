@@ -5,13 +5,19 @@ lazy val sxr = (project in file(".")).
   settings(
     inThisBuild(Seq(
       organization := "org.scala-sbt.sxr",
-      version := "0.4.0-SNAPSHOT",
+      version := "1.0.2",
       scalaVersion := "2.10.6",
       crossScalaVersions := List("2.12.1", "2.11.8", "2.10.6"),
-      bintrayOrganization := Some("typesafe"),
-      bintrayRepository := s"ivy-releases",
+      bintrayOrganization := Some("sbt"),
+      bintrayRepository := "maven-releases",
+      homepage := Some(url("http://www.scala-sbt.org/sxr/")),
+      description := "A Scala source code browser",
+      scmInfo := Some(ScmInfo(url("https://github.com/sbt/sxr"), "git@github.com:sbt/sxr.git")),
       bintrayPackage := "sxr",
-      bintrayReleaseOnPublish := false
+      bintrayReleaseOnPublish := false,
+      developers := List(
+        Developer("harrah", "Mark Harrah", "@harrah", url("https://github.com/harrah"))
+      )
     )),
     name := "sxr",
     scalacOptions += "-deprecation",
@@ -25,7 +31,8 @@ lazy val sxr = (project in file(".")).
     resourceGenerators in Compile <+= combineJs,
     commands += Command.command("testAll") { s: State => "testProj/test" :: "testLink/test" :: s },
     bintrayPackage := (bintrayPackage in ThisBuild).value,
-    bintrayRepository := (bintrayRepository in ThisBuild).value
+    bintrayRepository := (bintrayRepository in ThisBuild).value,
+    crossVersion := CrossVersion.full
   )
 
 lazy val testProj: Project = (project in file("test")).
