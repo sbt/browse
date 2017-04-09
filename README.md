@@ -1,4 +1,4 @@
-_NOTE: This project is UNSUPPORTED. It's been forked into sbt organization just to do the minimal maintenance required by sbt project. If you would like to take over the ownership of sxr, please contact [Josh Suereth](mailto:joshua.suereth@typesafe.com)._
+_NOTE: This project is UNSUPPORTED. It's been forked into sbt organization just to do the minimal maintenance required by sbt project. If you would like to take over the ownership of sxr, please contact [sbt-dev list](https://groups.google.com/forum/#!forum/sbt-dev)._
 
 Browsable Scala source code in HTML with:
 
