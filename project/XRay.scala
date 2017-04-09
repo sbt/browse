@@ -2,63 +2,10 @@ import sbt._
 import Keys._
 import Configurations.CompilerPlugin
 
-object XRay extends Build {
+object XRay {
+  val js = config("js").hide
+
   lazy val testAll = taskKey[Unit]("Runs all tests for this project.")
-
-  lazy val main = Project("sxr", file(".")) settings(
-                               name :=  "sxr",
-          organization in ThisBuild :=  "org.improving",
-               version in ThisBuild :=  "1.0.2",
-          scalaVersion in ThisBuild :=  "2.11.8",
-    crossScalaVersions in ThisBuild :=  List("2.12.1", "2.11.8", "2.10.6"),
-                           licenses :=  Seq("BSD New" -> file("LICENSE").toURL),
-                  ivyConfigurations +=  js,
-                         exportJars :=  true,
-                libraryDependencies ++= dependencies,
-                libraryDependencies +=  "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-                          jqueryAll :=  target.value / "jquery-all.js",
-                          combineJs :=  combineJquery(update.value, jqueryAll.value, streams.value.log),
-      resourceGenerators in Compile <+= combineJs,
-                           commands +=  Command.command("testAll")("test/test" :: "testLink/test" :: _)
-  ) settings (crossSourceSettings: _*)
-
-  lazy val test: Project = project.dependsOn(main % CompilerPlugin).settings(testProjectSettings: _*)
-
-  lazy val testLink: Project = project.dependsOn(main % CompilerPlugin, test).settings(testProjectSettings: _*).settings(
-    scalacOptions += {
-      val _ = clean.value
-      val linkFile = target.value / "links"
-      val testLinkFile = classDirectory.in(test, Compile).value.getParentFile / "classes.sxr"
-      IO.write(linkFile, testLinkFile.toURI.toURL.toExternalForm)
-      s"-P:sxr:link-file:$linkFile"
-    }
-  )
-
-  def crossSourceSettings = Seq(
-       unmanagedSourceDirectories in Compile ++=
-        Seq(
-           (sourceDirectory in Compile).value / s"scala-${scalaBinaryVersion.value}",
-           (sourceDirectory in Compile).value / s"scala-${scalaVersion.value}"
-        )
-
-  )
-
-  def testProjectSettings = Seq(
-    libraryDependencies ++= (scalaBinaryVersion.value match {
-      case "2.10" => Seq()
-      case _ =>      Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.6")
-    }),
-    autoCompilerPlugins :=  true,
-     compile in Compile := (compile in Compile).dependsOn(clean).value,
-              Keys.test :=  {
-      val _ = (compile in Compile).value
-      val out = (classDirectory in Compile).value
-      val base = baseDirectory.value
-      checkOutput(out / "../classes.sxr", base / "expected" / scalaBinaryVersion.value, streams.value.log)
-    }
-  )
-
-  val js        = config("js").hide
   val combineJs = TaskKey[Seq[File]]("combine-js")
   val jqueryAll = SettingKey[File]("jquery-all")
 
